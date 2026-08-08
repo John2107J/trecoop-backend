@@ -20,7 +20,10 @@ app.get("/", (req, res) => {
   res.send("API de Trecoop funcionando correctamente");
 });
 
+const categoryRoutes = require("./routes/categoryRoutes");
+
 app.use("/api/products", productRoutes);
+app.use("/api/categories", categoryRoutes);
 
 const PORT = process.env.PORT || 5000;
 

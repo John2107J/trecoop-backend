@@ -1,12 +1,25 @@
 const Product = require("../models/Product");
 
-// @desc    Obtener todos los productos
-// @route   GET /api/products
+// @desc    Obtener todos los productos (con búsqueda y filtro opcional)
+// @route   GET /api/products?buscar=texto&categoria=ID
 const getProducts = async (req, res) => {
   try {
-    const products = await Product.find()
+    const { buscar, categoria } = req.query;
+
+    const filtro = {};
+
+    if (buscar) {
+      filtro.nombre = { $regex: buscar, $options: "i" };
+    }
+
+    if (categoria) {
+      filtro.categoria = categoria;
+    }
+
+    const products = await Product.find(filtro)
       .populate("categoria", "nombre slug")
       .populate("vendedor", "nombre email");
+
     res.json(products);
   } catch (error) {
     res.status(500).json({
@@ -89,12 +102,10 @@ const updateProduct = async (req, res) => {
 
     res.json(productActualizado);
   } catch (error) {
-    res
-      .status(400)
-      .json({
-        mensaje: "Error al actualizar el producto",
-        error: error.message,
-      });
+    res.status(400).json({
+      mensaje: "Error al actualizar el producto",
+      error: error.message,
+    });
   }
 };
 

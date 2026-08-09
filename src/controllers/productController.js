@@ -9,12 +9,10 @@ const getProducts = async (req, res) => {
       .populate("vendedor", "nombre email");
     res.json(products);
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        mensaje: "Error al obtener los productos",
-        error: error.message,
-      });
+    res.status(500).json({
+      mensaje: "Error al obtener los productos",
+      error: error.message,
+    });
   }
 };
 
@@ -66,16 +64,30 @@ const createProduct = async (req, res) => {
 // @route   PUT /api/products/:id
 const updateProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const product = await Product.findById(req.params.id);
 
     if (!product) {
       return res.status(404).json({ mensaje: "Producto no encontrado" });
     }
 
-    res.json(product);
+    // El admin puede editar cualquier producto; el vendedor solo los suyos
+    const esDueño = product.vendedor.toString() === req.user._id.toString();
+    if (req.user.role !== "administrador" && !esDueño) {
+      return res
+        .status(403)
+        .json({ mensaje: "No podés editar productos de otro vendedor" });
+    }
+
+    const productActualizado = await Product.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+
+    res.json(productActualizado);
   } catch (error) {
     res
       .status(400)
@@ -90,11 +102,20 @@ const updateProduct = async (req, res) => {
 // @route   DELETE /api/products/:id
 const deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
+    const product = await Product.findById(req.params.id);
 
     if (!product) {
       return res.status(404).json({ mensaje: "Producto no encontrado" });
     }
+
+    const esDueño = product.vendedor.toString() === req.user._id.toString();
+    if (req.user.role !== "administrador" && !esDueño) {
+      return res
+        .status(403)
+        .json({ mensaje: "No podés eliminar productos de otro vendedor" });
+    }
+
+    await Product.findByIdAndDelete(req.params.id);
 
     res.json({ mensaje: "Producto eliminado correctamente" });
   } catch (error) {

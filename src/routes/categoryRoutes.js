@@ -7,11 +7,12 @@ const {
   updateCategory,
   deleteCategory,
 } = require("../controllers/categoryController");
+const { protect, authorize } = require("../middlewares/authMiddleware");
 
 router.get("/", getCategories);
 router.get("/:id", getCategoryById);
-router.post("/", createCategory);
-router.put("/:id", updateCategory);
-router.delete("/:id", deleteCategory);
+router.post("/", protect, authorize("administrador"), createCategory);
+router.put("/:id", protect, authorize("administrador"), updateCategory);
+router.delete("/:id", protect, authorize("administrador"), deleteCategory);
 
 module.exports = router;

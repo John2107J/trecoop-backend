@@ -53,8 +53,7 @@ const getProductById = async (req, res) => {
 // @route   POST /api/products
 const createProduct = async (req, res) => {
   try {
-    const { nombre, precio, descripcion, stock, categoria, vendedor } =
-      req.body;
+    const { nombre, precio, descripcion, stock, categoria } = req.body;
 
     const product = await Product.create({
       nombre,
@@ -62,7 +61,7 @@ const createProduct = async (req, res) => {
       descripcion,
       stock,
       categoria,
-      vendedor,
+      vendedor: req.user._id,
     });
 
     res.status(201).json(product);
@@ -78,11 +77,9 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-
     if (!product) {
       return res.status(404).json({ mensaje: "Producto no encontrado" });
     }
-
     // El admin puede editar cualquier producto; el vendedor solo los suyos
     const esDueño = product.vendedor.toString() === req.user._id.toString();
     if (req.user.role !== "administrador" && !esDueño) {
@@ -90,7 +87,6 @@ const updateProduct = async (req, res) => {
         .status(403)
         .json({ mensaje: "No podés editar productos de otro vendedor" });
     }
-
     const productActualizado = await Product.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -98,7 +94,9 @@ const updateProduct = async (req, res) => {
         new: true,
         runValidators: true,
       },
-    );
+    )
+      .populate("categoria", "nombre slug")
+      .populate("vendedor", "nombre email");
 
     res.json(productActualizado);
   } catch (error) {

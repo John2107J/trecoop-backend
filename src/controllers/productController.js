@@ -64,7 +64,11 @@ const createProduct = async (req, res) => {
       vendedor: req.user._id,
     });
 
-    res.status(201).json(product);
+    const productoConDetalle = await Product.findById(product._id)
+      .populate("categoria", "nombre slug")
+      .populate("vendedor", "nombre email");
+
+    res.status(201).json(productoConDetalle);
   } catch (error) {
     res
       .status(400)

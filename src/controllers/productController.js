@@ -138,10 +138,56 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+// @desc    Finalizar compra: descuenta stock de todos los productos del carrito
+// @route   POST /api/products/comprar
+const comprarProductos = async (req, res) => {
+  try {
+    const { items } = req.body; // [{ productoId, cantidad }]
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res
+        .status(400)
+        .json({ mensaje: "El carrito está vacío o es inválido" });
+    }
+
+    // Primero validamos que TODOS los productos tengan stock suficiente,
+    // antes de descontar nada (para no dejar la compra a medio hacer)
+    for (const item of items) {
+      const producto = await Product.findById(item.productoId);
+
+      if (!producto) {
+        return res
+          .status(404)
+          .json({ mensaje: `Producto no encontrado (${item.productoId})` });
+      }
+
+      if (producto.stock < item.cantidad) {
+        return res.status(400).json({
+          mensaje: `Stock insuficiente para "${producto.nombre}". Disponible: ${producto.stock}`,
+        });
+      }
+    }
+
+    // descontamos el stock real de los productos
+    for (const item of items) {
+      await Product.findByIdAndUpdate(item.productoId, {
+        $inc: { stock: -item.cantidad },
+      });
+    }
+
+    res.json({ mensaje: "Compra realizada con éxito" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ mensaje: "Error al procesar la compra", error: error.message });
+  }
+};
+
 module.exports = {
   getProducts,
   getProductById,
   createProduct,
   updateProduct,
   deleteProduct,
+  comprarProductos,
 };

@@ -6,11 +6,14 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
+  comprarProductos,
 } = require("../controllers/productController");
+
 const { protect, authorize } = require("../middlewares/authMiddleware");
 
 router.get("/", getProducts);
 router.get("/:id", getProductById);
+router.post("/comprar", protect, comprarProductos);
 router.post(
   "/",
   protect,

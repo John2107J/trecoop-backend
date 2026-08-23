@@ -13,10 +13,7 @@ connectDB();
 
 const app = express();
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://trecoop-frontend.vercel.app",
-];
+const allowedOrigins = ["http://localhost:5173", "https://trecoop.vercel.app"];
 
 app.use(
   cors({
